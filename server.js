@@ -12,44 +12,20 @@ const connection = mysql.createConnection({
 connection.connect((err) => {
     if (err) throw err;
 
-    connection.query('USE tracker', (err) => {
-        if (err) throw err;
-        runSchema();
+    const sqlQueries = fs.readFileSync('./db/schema.sql', 'utf8');
+
+    connection.query(sqlQueries, (err, results) => {
+        if (err) {
+            console.error('Error executing SQL statement:', err);
+            return;
+        }
+        console.log('Queries executed successfully:');
+
+        startApp();
     });
+
 });
 
-function executeQuery(query) {
-    if (!query || query.trim() === '') {
-        return;
-    }
-
-    if (query.toLowerCase().includes('create table')) {
-        connection.query(query, (err, result) => {
-            if (err) {
-                console.error('Error executing SQL statement:', err);
-            }
-        });
-    } else {
-        connection.query(query, (err, result) => {
-            if (err) {
-                console.error('Error executing SQL statement:', err);
-            } else {
-                console.log('SQL statement executed successfully:', query);
-            }
-        });
-    }
-}
-
-function runSchema() {
-    const schema = fs.readFileSync('./db/schema.sql', 'utf8');
-    const statements = schema.split(';');
-
-    statements.forEach((statement) => {
-        executeQuery(statement);
-    });
-
-    startApp();
-}
 
 function startApp() {
     inquirer
@@ -110,47 +86,56 @@ function startApp() {
         });
 }
 
-
 function viewDepartments() {
-    connection.query('SELECT * FROM department', (err, results) => {
-        if (err) throw err;
-
+    const query = 'SELECT * FROM department';
+    connection.query(query, (err, results) => {
+        if (err) {
+            console.error('Error viewing departments:', err); 
+            startApp();
+            return;
+        }
         console.table(results);
         startApp();
     });
 }
 
 function viewRoles() {
-    connection.query('SELECT role.*, department.name AS department_name FROM role JOIN department ON role.department_id = department.id', (err, results) => {
-        if (err) throw err;
+    const query = 'SELECT role.*, department.name AS department_name FROM role JOIN department ON role.department_id = department.id';
+    connection.query(query, (err, results) => {
+        if (err) {
+            console.error('Error viewing roles:', err);
+            startApp();
+            return;
+        }
 
         console.table(results);
-
         startApp();
     });
 }
 
 function viewEmployees() {
     const query = `
-    SELECT 
-      employee.id, 
-      employee.first_name, 
-      employee.last_name, 
-      role.title, 
-      department.name AS department_name, 
-      role.salary, 
-      CONCAT(manager.first_name, ' ', manager.last_name) AS manager_name
-    FROM employee
-    LEFT JOIN role ON employee.role_id = role.id
-    LEFT JOIN department ON role.department_id = department.id
-    LEFT JOIN employee AS manager ON employee.manager_id = manager.id
-  `;
-
+        SELECT 
+            employee.id, 
+            employee.first_name, 
+            employee.last_name, 
+            role.title, 
+            department.name AS department_name, 
+            role.salary, 
+            CONCAT(manager.first_name, ' ', manager.last_name) AS manager_name
+        FROM employee
+        LEFT JOIN role ON employee.role_id = role.id
+        LEFT JOIN department ON role.department_id = department.id
+        LEFT JOIN employee AS manager ON employee.manager_id = manager.id
+    `;
     connection.query(query, (err, results) => {
-        if (err) throw err;
+        if (err) {
+            console.error('Error viewing employees:', err);
+            startApp();
+            return;
+        }
 
         console.table(results);
-
         startApp();
     });
 }

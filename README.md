@@ -1,4 +1,4 @@
-# 12 SQL: Employee Tracker
+# Employee Tracker
 
 ## Description
 
