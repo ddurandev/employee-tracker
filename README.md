@@ -12,6 +12,8 @@ N/A
 
 In the terminal type npm start to begin.
 
+walkthrough video: https://drive.google.com/file/d/146kUTOm_1ME9iTrbeEMBrKmTby2KFtqI/view
+
 ## Credits
 
 N/A
